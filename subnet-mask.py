@@ -1,6 +1,4 @@
 #!/usr/bin/python3.6
-# Ce fichier est un petit script Python servant a prendre une addresse IP et
-# d'en extraire son masque sous-reseau, wildcard, etc...
 import re
 from argparse import ArgumentParser
 
