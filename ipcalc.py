@@ -2,14 +2,14 @@
 
 import re
 from ip_utils import IPAddress, DecimalDotNotation, Byte
-from ipcalc import ipcalc
+from solution import ipcalc
 from argparse import ArgumentParser
 
 ip_pattern = re.compile(r"^(\d{1,3}).(\d{1,3}).(\d{1,3}).(\d{1,3})\/(\d{1,2})$")
 
 def extract_byte(str):
     value = int(str)
-    if value not in range(255):
+    if value not in range(256):
         err = ValueError()
         err.strerror = "Valeur d'octet invalide : {0}".format(value)
         raise err
@@ -26,7 +26,7 @@ def parse_ip(addr):
     ddn = DecimalDotNotation.from_byte_groups(list(map(extract_byte, valid_ip.groups()[:-1])))
 
     mask_length = int(valid_ip.groups()[-1])
-    if mask_length not in range(32):
+    if mask_length not in range(33):
         err = ValueError()
         err.strerror = "Valeur de masque invalide : {0}".format(mask_length)
         raise err

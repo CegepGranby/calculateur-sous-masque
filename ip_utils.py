@@ -37,11 +37,15 @@ class Byte:
     def __and__(self, other_byte):
         return Byte(int(self) & int(other_byte))
 
+    def __or__(self, other_byte):
+        return Byte(int(self) | int(other_byte))
+
 """
     Classe pour representer la notation "decimal dot" (EX : 165.92.12.71)
         - Être affichee en format binaire           : format(ddn, "b")
         - Être affichee en format decimale          : str(ddn)
         - Donner le resultat du et logique          : ddn & autre_ddn
+        - Donner le resultat du ou logique          : ddn | autre_ddn
         - Donner le resultat d'une addition         : ddn + autre_ddn
         - Donner le resultat de la negation binaire : ~ddn
 
@@ -102,6 +106,14 @@ class DecimalDotNotation:
 
         return DecimalDotNotation.from_byte_groups(list(map(logical_and, range(4))))
 
+    def __or__(self, other_ddn):
+        def logical_or(byte_index):
+            my_byte = self.byte_groups[byte_index]
+            other_byte = other_ddn.byte_groups[byte_index]
+            return my_byte | other_byte
+
+        return DecimalDotNotation.from_byte_groups(list(map(logical_or, range(4))))
+
     def __invert__(self):
         mask = ~(-1 << 32)
         return DecimalDotNotation.from_dec(int(self) ^ mask)
@@ -109,6 +121,10 @@ class DecimalDotNotation:
     def __add__(self, addend):
         val = int(self)
         return DecimalDotNotation.from_dec(val + addend)
+
+    def __sub__(self, subtrahend):
+        val = int(self)
+        return DecimalDotNotation.from_dec(val - subtrahend)
 
 """
     Classe pour representer une adresse IP CIDR
