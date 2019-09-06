@@ -15,7 +15,7 @@ Voici ma solution :
 Pour vous donner une idée, mon implémentation (sans compter l'affichage) est d'eviron 10 lignes de code.
 
 ## Comment faire
-Vous devez tout d'abbord créé un fichier à la racine du projet appelé **exactement** : `solution.py`. Ensuite vous devrez créer une fonction appelée `ipcalc` prenant en paramètre une adresse ip et un masque sous-réseau. Voici à quoi elle devrait ressembler :
+Vous devez tout d'abbord créer un fichier à la racine du projet appelé **exactement** : `solution.py`. Ensuite vous devrez créer une fonction appelée `ipcalc` prenant en paramètre une adresse ip et un masque sous-réseau. Voici à quoi elle devrait ressembler :
 
 ```python
 def ipcalc(addr, mask):
@@ -25,7 +25,7 @@ Cette fonction sera appelée automatiquement lorsque vous faite :
 ```
 $ python ipcalc.py
 ```
-Cette commande partira notre programme et demandera d'entrer une adresse IP CIDR. Si vous voulez éviter de la rentrer à chaque fois, faites :
+Cette commande partira le programme et demandera d'entrer une adresse IP CIDR. Si vous voulez éviter de la rentrer à chaque fois, faites :
 ```
 $ python ipcalc.py -a ADRESSE_IP
 ```
@@ -45,6 +45,7 @@ Symbole Pythonien : `&`
 |--------|---|---|
 | **0**  | 0 | 1 |
 | **1**  | 1 | 1 |
+
 
 Symbole Pythonien : `|`
 
