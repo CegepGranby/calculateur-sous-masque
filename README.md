@@ -31,39 +31,61 @@ $ python ipcalc.py -a ADRESSE_IP
 ```
 Pour la passer en paramètre.
 
+## Correcteur automatique
+Le programme vient avec un correcteur automatique, pour l'appeler simplement faire :
+```
+$ python ipcalc.py -c
+```
+
+Par contre votre fonction `ipcalc` devra retourner un objet de type `IPInfo`. Voici comment faire :
+
+```python
+from ip_utils import IPInfo
+# Importez la classe en question dans ip_utils
+
+def ipcalc(addr, mask):
+	# Votre définition
+	return IPInfo(addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts)
+```
+
 ## Notion pour le binaire
 ### Le "et" logique
+Symbole Pythonien : `&`
+
 | AND    | 0 | 1 |
 |--------|---|---|
 | **0**  | 0 | 0 |
 | **1**  | 0 | 1 |
 
-Symbole Pythonien : `&`
 
 ### Le "ou" logique
+Symbole Pythonien : `|`
+
 | OR     | 0 | 1 |
 |--------|---|---|
 | **0**  | 0 | 1 |
 | **1**  | 1 | 1 |
 
-Symbole Pythonien : `&#124;`
-
 ### Le "ou" exclusif
+Symbole Pythonien : `^`
+
 | XOR    | 0 | 1 |
 |--------|---|---|
 | **0**  | 0 | 1 |
 | **1**  | 1 | 0 |
 
-Symbole Pythonien : `^`
 
 ### La négation binaire
+Symbole Pythonien : `~`
+
 | NOT    |   |
 |--------|---|
 | **0**  | 1 |
 | **1**  | 0 |
-Symbole Pythonien : `~`
 
 ### Le décalage de bit
+Symboles Pythonien : `<<` et `>>`
+
 Cet opérateur est surtout utilisé dans la partie que j'ai codé, vous n'aurez pas besoin de l'utiliser. Voici tout de même son fonctionnement en Python
 ```python
 # Décalage à gauche

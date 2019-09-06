@@ -1,6 +1,83 @@
 #!/usr/bin/python3.6
 from functools import reduce
 
+# Classe pour le correcteur
+class IPInfo:
+    def __init__(self, ip_addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts):
+        self.ip_addr = format(ip_addr, "m") if isinstance(ip_addr, IPAddress) else ip_addr
+        self.mask = str(mask)
+        self.wildcard = str(wildcard)
+        self.network = str(network) if network is not None else None
+        self.broadcast = str(broadcast) if broadcast is not None else None
+        self.hostmin = str(hostmin) if hostmin is not None else None
+        self.hostmax = str(hostmax) if hostmax is not None else None
+        self.hosts = str(hosts)
+
+    @staticmethod
+    def from_dict(dic):
+        ip_addr = dic["Address"]
+        mask = dic["Netmask"]
+        wildcard = dic["Wildcard"]
+        network =  dic["Network"] if "Network" in dic else None
+        broadcast = dic["Broadcast"] if "Broadcast" in dic else None
+        hostmin = dic["HostMin"] if "HostMin" in dic else None
+        hostmax = dic["HostMax"] if "HostMax" in dic else None
+        hosts = dic["Hosts/Net"]
+        return IPInfo(ip_addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts)
+
+    def __eq__(self, ip_info):
+        equal = True
+
+        def print_error(val_name, ans, student_ans):
+            print("{0} incorrect pour l'adresse {1} : {2} devrait être {3}".format(val_name, ip_info.ip_addr, student_ans, ans))
+            print()
+
+        if self.wildcard is not None and self.wildcard != ip_info.wildcard:
+            print_error("Wildcard", self.wildcard, ip_info.wildcard)
+            equal = False
+
+        if self.network is not None and self.network != ip_info.network:
+            print_error("Adresse de réseau", self.network, ip_info.network)
+            equal = False
+
+        if self.broadcast is not None and self.broadcast != ip_info.broadcast:
+            print_error("Adresse de broadcast", self.broadcast, ip_info.broadcast)
+            equal = False
+
+        if self.hostmin is not None and self.hostmin != ip_info.hostmin:
+            print_error("Première adresse disponible", self.hostmin, ip_info.hostmin)
+            equal = False
+
+        if self.hostmax is not None and self.hostmax != ip_info.hostmax:
+            print_error("Dernière adresse disponible", self.hostmax, ip_info.hostmax)
+            equal = False
+
+        if self.hosts is not None and self.hosts != ip_info.hosts:
+            print_error("Nombre d'hôte", self.hosts, ip_info.hosts)
+            equal = False
+
+        return equal
+
+def gen_mask(length):
+    """
+        Cree un bitmask rempli de 1 de longeur n (la taille de notre masque)
+        Demonstration avec une longeur de 8 bits:
+          > 1                  = 0000 0000 0001
+          > 1 << 8 = 256       = 0001 0000 0000
+                                      <<<<8<<<<
+          > (1 << 8) - 1 = 255 = 0000 1111 1111
+    """
+    mask = (1 << length) - 1
+
+    """
+        Decale le masque de (32 - n) bits vers la gauche pour le positionner a la bonne place
+          > 255               = 0000 0000 0000 0000 0000 0000 1111 1111
+          > 255 << (32 - 8)
+          > 255 << 26         = 1111 1111 0000 0000 0000 0000 0000 0000
+                                          <<<<<<<<<<<26<<<<<<<<<<<<<<<<
+    """
+    return DecimalDotNotation.from_dec(mask << (32 - length))
+
 """
     Classe pour representer un Octet. Elle peut :
         - Être affichee en format binaire    : format(octet, "b")
@@ -221,3 +298,9 @@ class IPAddress:
     # Casting
     def __str__(self):
         return str(self.ddn)
+
+# Un petit cadeau <3
+def print_gj():
+    print()
+    print("░░█▀░░░░░░░░░░░▀▀███████░░░░░\n░░█▌░░░░░░░░░░░░░░░▀██████░░░\n░█▌░░░░░░░░░░░░░░░░███████▌░░\n░█░░░░░░░░░░░░░░░░░████████░░\n▐▌░░░░░░░░░░░░░░░░░▀██████▌░░\n░▌▄███▌░░░░▀████▄░░░░▀████▌░░\n▐▀▀▄█▄░▌░░░▄██▄▄▄▀░░░░████▄▄░\n▐░▀░░═▐░░░░░░══░░▀░░░░▐▀░▄▀▌▌\n▐░░░░░▌░░░░░░░░░░░░░░░▀░▀░░▌▌\n▐░░░▄▀░░░▀░▌░░░░░░░░░░░░▌█░▌▌\n░▌░░▀▀▄▄▀▀▄▌▌░░░░░░░░░░▐░▀▐▐░\n░▌░░▌░▄▄▄▄░░░▌░░░░░░░░▐░░▀▐░░\n░█░▐▄██████▄░▐░░░░░░░░█▀▄▄▀░░\n░▐░▌▌░░░░░░▀▀▄▐░░░░░░█▌░░░░░░\n░░█░░▄▀▀▀▀▄░▄═╝▄░░░▄▀░▌░░░░░░\n░░░▌▐░░░░░░▌░▀▀░░▄▀░░▐░░░░░░░\n░░░▀▄░░░░░░░░░▄▀▀░░░░█░░░░░░░\n░░░▄█▄▄▄▄▄▄▄▀▀░░░░░░░▌▌░░░░░░\n░░▄▀▌▀▌░░░░░░░░░░░░░▄▀▀▄░░░░░\n▄▀░░▌░▀▄░░░░░░░░░░▄▀░░▌░▀▄░░░\n░░░░▌█▄▄▀▄░░░░░░▄▀░░░░▌░░░▌▄▄\n░░░▄▐██████▄▄░▄▀░░▄▄▄▄▌░░░░▄░\n░░▄▌████████▄▄▄███████▌░░░░░▄\n░▄▀░██████████████████▌▀▄░░░░\n▀░░░█████▀▀░░░▀███████░░░▀▄░░\n░░░░▐█▀░░░▐░░░░░▀████▌░░░░▀▄░\n░░░░░░▌░░░▐░░░░▐░░▀▀█░░░░░░░▀\n░░░░░░▐░░░░▌░░░▐░░░░░▌░░░░░░░\n")
+    print()

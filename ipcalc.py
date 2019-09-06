@@ -1,9 +1,20 @@
 #!/usr/bin/python3.6
 
 import re
-from ip_utils import IPAddress, DecimalDotNotation, Byte
+from ip_utils import *
 from solution import ipcalc
 from argparse import ArgumentParser
+import json
+
+def load_answers():
+    def convert_to_ip_info(dic_str):
+        dic = json.loads(dic_str)
+        return IPInfo.from_dict(dic)
+
+    frontier_ans = list(map(convert_to_ip_info, open('data/frontiere.txt').readlines()))
+    non_frontier_str = list(map(convert_to_ip_info, open('data/non-frontiere.txt').readlines()))
+
+    return (frontier_ans, non_frontier_str)
 
 # Expression reguliere pour valider et extraire chacune des valeurs
 ip_pattern = re.compile(r"^(\d{1,3}).(\d{1,3}).(\d{1,3}).(\d{1,3})\/(\d{1,2})$")
@@ -59,31 +70,53 @@ def get_addr(args):
 
     return addr
 
-
 def main():
     parser = ArgumentParser()
     parser.add_argument("-a", "--adresse", dest="adr")
+    parser.add_argument("-c", "--correcteur", dest="cor", action='store_true')
     args = parser.parse_args()
+
+    # Mode correction
+    if args.cor:
+        frontier, non_frontier = load_answers()
+        line = "\n" + "=" * 100 + "\n"
+        print(line)
+        print("Correcteur automatique, bonne chance!")
+        print(line)
+
+        def validate_student_answer(ans):
+            ip_addr = parse_ip(ans.ip_addr)
+            student_ans = ipcalc(ip_addr, gen_mask(ip_addr.mask_length))
+            return ans == student_ans
+
+        all_good = reduce(lambda x, y: x and y, list(map(validate_student_answer, frontier)), True)
+
+        total_frontier = 2 if all_good else 0
+        print(line)
+        print("Total partie sur la frontière d'octet : {0}/2".format(total_frontier))
+        print(line)
+
+        all_good = reduce(lambda x, y: x and y, list(map(validate_student_answer, non_frontier)), True)
+
+        total_non_frontier = 2 if all_good else 0
+        print(line)
+        print("Total partie pas sur une frontière d'octet : {0}/2".format(total_non_frontier))
+        print(line)
+
+        total = total_non_frontier + total_frontier
+        if total == 4:
+            total += 1
+            print("Tout est bon, Bravo! Total++")
+            print_gj()
+
+        print("Total {0}/5".format(total))
+        print(line)
+        return
 
     addr = get_addr(args)
 
-    # Cree un bitmask rempli de 1 de longeur n (la taille de notre masque)
-    # Demonstration avec une longeur de 8 bits:
-    #   > 1                  = 0000 0000 0001
-    #   > 1 << 8 = 256       = 0001 0000 0000
-    #                               <<<<8<<<<
-    #   > (1 << 8) - 1 = 255 = 0000 1111 1111
-    mask = (1 << addr.mask_length) - 1
-
-    # Decale le masque de (32 - n) bits vers la gauche pour le positionner a la bonne place
-    #   > 255               = 0000 0000 0000 0000 0000 0000 1111 1111
-    #   > 255 << (32 - 8)
-    #   > 255 << 26         = 1111 1111 0000 0000 0000 0000 0000 0000
-    #                                   <<<<<<<<<<<26<<<<<<<<<<<<<<<<
-    mask = mask << (32 - addr.mask_length)
-
     # Voici le point d'entree de l'exercice, cette ligne appellera votre code.
-    ipcalc(addr, DecimalDotNotation.from_dec(mask))
+    ipcalc(addr, gen_mask(addr.mask_length))
 
 
 if __name__ + "__main__":
