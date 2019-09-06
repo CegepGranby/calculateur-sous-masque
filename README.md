@@ -89,7 +89,7 @@ Symboles Pythonien : `<<` et `>>`
 Cet opérateur est surtout utilisé dans la partie que j'ai codé, vous n'aurez pas besoin de l'utiliser. Voici tout de même son fonctionnement en Python
 ```python
 # Décalage à gauche
-# 		   0001 => 1
+#          0001 => 1
 1 << 1 # = 0010 => 2
 1 << 2 # = 0100 => 4
 
