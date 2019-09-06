@@ -183,12 +183,12 @@ class DecimalDotNotation:
     """
     def __add__(self, addend):
         val = int(self)
-        return DecimalDotNotation.from_dec(val + addend)
+        return DecimalDotNotation.from_dec(val + int(addend))
 
     # La soustraction est comme le "et" logique.
     def __sub__(self, subtrahend):
         val = int(self)
-        return DecimalDotNotation.from_dec(val - subtrahend)
+        return DecimalDotNotation.from_dec(val - int(subtrahend))
 
 """
     Classe pour representer une adresse IP CIDR
