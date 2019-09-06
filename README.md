@@ -46,8 +46,7 @@ Symbole Pythonien : `&`
 | **0**  | 0 | 1 |
 | **1**  | 1 | 1 |
 
-
-Symbole Pythonien : `|`
+Symbole Pythonien : `&#124;`
 
 ### Le "ou" exclusif
 | XOR    | 0 | 1 |
