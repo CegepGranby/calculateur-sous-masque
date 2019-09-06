@@ -202,7 +202,7 @@ class DecimalDotNotation:
                 On la deplace vers le bon index : 1 * 8 = 8
                 value         = 0000 0000 0000 0000 0000 0000 0000 0000
                 byte          = 0000 0000 0000 0000 0000 0000 1111 0000
-                                                            └--240--┘
+                                                              └--240--┘
                 offset_byte   = 0000 0000 0000 0000 1111 0000 0000 0000
                                 <<<<8<<<<           └------61440------┘
                 ou logique -> V 0000 0000 0000 0000 0000 0000 0000 0000 (valeur de value)
