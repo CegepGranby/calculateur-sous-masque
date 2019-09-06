@@ -61,13 +61,40 @@ class DecimalDotNotation:
     @staticmethod
     def from_dec(dec):
         ddn = DecimalDotNotation()
-
-        def place_byte_in_value(byte_index):
+        """
+            Decompose une valeur 32 bits en 4 octets a partir d'un index
+            Exemple :
+            4 294 963 200 = 1111 1111 1111 1111 1111 0000 0000 0000
+            Index d'octet   └---3---┘ └---2---┘ └---1---┘ └---0---┘
+                                |         |         |         |
+                               255   .   255   .   240   .    0
+        """
+        def extract_byte_at_index(byte_index):
             offset = byte_index * 8
-            byte_mask = ~(-1 << 8) << offset
-            return Byte((dec & byte_mask) >> offset)
 
-        ddn.byte_groups = list(map(place_byte_in_value, reversed(range(4))))
+            # On cree un bitmask d'octet et on le place au bon decalage
+            byte_mask = (1 << 8) - 1 << offset
+
+            """
+                On fait un et logique pour avoir la bonne valeur et remet la valeur
+                au bon positionnement :
+                  1111 1111 1111 1111 1111 0000 0000 0000
+                ^ 0000 0000 0000 0000 1111 1111 0000 0000
+                  =======================================
+                  0000 0000 0000 0000 1111 0000 0000 0000
+                Index d'octet         ├---1---┘         |
+                1 * 8 = 8             └------61440------┘
+                  0000 0000 0000 0000 0000 0000 1111 0000
+                  >>>>8>>>>                     └--240--┘
+            """
+            return Byte((dec & byte_mask) >> offset)
+        """
+            On doit inverser nos index, pour la raison suivante :
+            Index dans un tableau :   0    1    2   3
+                                    [255, 255, 240, 0]
+            Index dans 32 bits    :   3    2    1   0
+        """
+        ddn.byte_groups = list(map(extract_byte_at_index, reversed(range(4))))
         return ddn
 
     @staticmethod
@@ -87,18 +114,40 @@ class DecimalDotNotation:
 
     # Casting
     def __int__(self):
-        def place_byte(value, byte_info):
+
+        # L'action inverse de "extract_byte_at_index"
+        def place_byte_at_index(value, byte_info):
+
+            # Prend notre valeur de bit : 240 = 1111 0000
             byte_index, byte = byte_info
-            offset_byte = int(byte) << ((3 - byte_index) * 8)
+
+            """
+                On la deplace vers le bon index : 1 * 8 = 8
+                value         = 0000 0000 0000 0000 0000 0000 0000 0000
+                byte          = 0000 0000 0000 0000 0000 0000 1111 0000
+                                                            └--240--┘
+                offset_byte   = 0000 0000 0000 0000 1111 0000 0000 0000
+                                <<<<8<<<<           └------61440------┘
+                ou logique -> V 0000 0000 0000 0000 0000 0000 0000 0000 (valeur de value)
+                                =======================================
+                return        = 0000 0000 0000 0000 1111 0000 0000 0000
+
+                La valeur de retour sera conserve et reutilise pour la prochaine iteration
+                elle deviendra eventuellement notre valeur 32 bits.
+            """
+            offset_byte = int(byte) << (byte_index * 8)
             return value | offset_byte
 
-        return reduce(place_byte, enumerate(self.byte_groups), 0)
+        return reduce(place_byte_at_index, enumerate(reversed(self.byte_groups)), 0)
 
     def __str__(self):
         return ".".join(map(str, self.byte_groups))
 
     # Operateurs
     def __and__(self, other_ddn):
+
+        # Le "et" logique est tout simplement un "et" entre chancun
+        # des 4 octets de nos 32 bits
         def logical_and(byte_index):
             my_byte = self.byte_groups[byte_index]
             other_byte = other_ddn.byte_groups[byte_index]
@@ -107,6 +156,8 @@ class DecimalDotNotation:
         return DecimalDotNotation.from_byte_groups(list(map(logical_and, range(4))))
 
     def __or__(self, other_ddn):
+
+        # Meme chose que le "et" logique
         def logical_or(byte_index):
             my_byte = self.byte_groups[byte_index]
             other_byte = other_ddn.byte_groups[byte_index]
@@ -114,14 +165,27 @@ class DecimalDotNotation:
 
         return DecimalDotNotation.from_byte_groups(list(map(logical_or, range(4))))
 
+    # Pour inverser les 32 bits j'utilise ce que l'on appel un "ou exclusif" (xor)
+    # couple avec un bitmask de 32 bits à 1.
     def __invert__(self):
-        mask = ~(-1 << 32)
+        mask = (1 << 32) - 1
+        """
+            mask   = 1111 1111 1111 1111 1111 1111 1111 1111
+            valeur = 1111 1111 1111 1111 1111 0000 0000 0000
+                 xor =======================================
+                     0000 0000 0000 0000 0000 1111 1111 1111
+        """
         return DecimalDotNotation.from_dec(int(self) ^ mask)
-
+    """
+        Pour faire l'adition je converti d'abbord mon objet DecimalDotNotation
+        en int et je fait l'addition de celle-ci. Je retourne ensuite un objet
+        DecimalDotNotation contenant la somme de l'addtion.
+    """
     def __add__(self, addend):
         val = int(self)
         return DecimalDotNotation.from_dec(val + addend)
 
+    # La soustraction est comme le "et" logique.
     def __sub__(self, subtrahend):
         val = int(self)
         return DecimalDotNotation.from_dec(val - subtrahend)
