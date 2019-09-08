@@ -1,82 +1,6 @@
 #!/usr/bin/python3.6
 from functools import reduce
-
-# Classe pour le correcteur
-class IPInfo:
-    def __init__(self, ip_addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts):
-        self.ip_addr = format(ip_addr, "m") if isinstance(ip_addr, IPAddress) else ip_addr
-        self.mask = str(mask)
-        self.wildcard = str(wildcard)
-        self.network = str(network) if network is not None else None
-        self.broadcast = str(broadcast) if broadcast is not None else None
-        self.hostmin = str(hostmin) if hostmin is not None else None
-        self.hostmax = str(hostmax) if hostmax is not None else None
-        self.hosts = str(hosts)
-
-    @staticmethod
-    def from_dict(dic):
-        ip_addr = dic["Address"]
-        mask = dic["Netmask"]
-        wildcard = dic["Wildcard"]
-        network =  dic["Network"] if "Network" in dic else None
-        broadcast = dic["Broadcast"] if "Broadcast" in dic else None
-        hostmin = dic["HostMin"] if "HostMin" in dic else None
-        hostmax = dic["HostMax"] if "HostMax" in dic else None
-        hosts = dic["Hosts/Net"]
-        return IPInfo(ip_addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts)
-
-    def __eq__(self, ip_info):
-        equal = True
-
-        def print_error(val_name, ans, student_ans):
-            print("{0} incorrect pour l'adresse {1} : {2} devrait être {3}".format(val_name, ip_info.ip_addr, student_ans, ans))
-            print()
-
-        if self.wildcard is not None and self.wildcard != ip_info.wildcard:
-            print_error("Wildcard", self.wildcard, ip_info.wildcard)
-            equal = False
-
-        if self.network is not None and self.network != ip_info.network:
-            print_error("Adresse de réseau", self.network, ip_info.network)
-            equal = False
-
-        if self.broadcast is not None and self.broadcast != ip_info.broadcast:
-            print_error("Adresse de broadcast", self.broadcast, ip_info.broadcast)
-            equal = False
-
-        if self.hostmin is not None and self.hostmin != ip_info.hostmin:
-            print_error("Première adresse disponible", self.hostmin, ip_info.hostmin)
-            equal = False
-
-        if self.hostmax is not None and self.hostmax != ip_info.hostmax:
-            print_error("Dernière adresse disponible", self.hostmax, ip_info.hostmax)
-            equal = False
-
-        if self.hosts is not None and self.hosts != ip_info.hosts:
-            print_error("Nombre d'hôte", self.hosts, ip_info.hosts)
-            equal = False
-
-        return equal
-
-def gen_mask(length):
-    """
-        Cree un bitmask rempli de 1 de longeur n (la taille de notre masque)
-        Demonstration avec une longeur de 8 bits:
-          > 1                  = 0000 0000 0001
-          > 1 << 8 = 256       = 0001 0000 0000
-                                      <<<<8<<<<
-          > (1 << 8) - 1 = 255 = 0000 1111 1111
-    """
-    mask = (1 << length) - 1
-
-    """
-        Decale le masque de (32 - n) bits vers la gauche pour le positionner a la bonne place
-          > 255               = 0000 0000 0000 0000 0000 0000 1111 1111
-          > 255 << (32 - 8)
-          > 255 << 26         = 1111 1111 0000 0000 0000 0000 0000 0000
-                                          <<<<<<<<<<<26<<<<<<<<<<<<<<<<
-    """
-    return DecimalDotNotation.from_dec(mask << (32 - length))
+import re
 
 """
     Classe pour representer un Octet. Elle peut :
@@ -132,6 +56,9 @@ class Byte:
         - DecimalDotNotation.from_byte_group(liste_d_octets)
 """
 class DecimalDotNotation:
+    # Expressions regulieres pour valider et extraire chacune des valeurs
+    ddn_pattern = re.compile(r"^(\d{1,3}).(\d{1,3}).(\d{1,3}).(\d{1,3})$")
+
     def __init__(self):
         self.byte_groups = []
 
@@ -179,6 +106,27 @@ class DecimalDotNotation:
         ddn = DecimalDotNotation()
         ddn.byte_groups = byte_groups
         return ddn
+
+    @staticmethod
+    def from_str(addr_str):
+        valid_ip = re.match(DecimalDotNotation.ddn_pattern, addr_str)
+        if not valid_ip:
+            err = ValueError()
+            err.strerror = "EX : 113.92.12.133\n"
+            raise err
+
+        # Valide une valeur decimale et la transforme en objet Byte
+        def extract_byte(str):
+            value = int(str)
+            # On valide que notre octet est entre 0 et 255
+            if value not in range(256):
+                err = ValueError()
+                err.strerror = "Valeur d'octet invalide : {0}".format(value)
+                raise err
+
+            return Byte(value)
+
+        return DecimalDotNotation.from_byte_groups(list(map(extract_byte, valid_ip.groups())))
 
     # Affichage
     def __format__(self, fmt):
@@ -267,18 +215,70 @@ class DecimalDotNotation:
         val = int(self)
         return DecimalDotNotation.from_dec(val - int(subtrahend))
 
-"""
-    Classe pour representer une adresse IP CIDR
-        - Être affichee en format binaire  : format(adresse, "b")
-        - Être affichee en format decimale : str(adresse)
-        - Être affichee en format CIDR     : format(adresse, "m")
-
-    Cet objet est cree de la facon suivante : IPAddress(ddn, longeur_du_masque)
-"""
 class IPAddress:
+    cidr_ip_pattern = re.compile(r"^(\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})/(\d{1,2})$")
+
     def __init__(self, ddn, mask_length):
         self.ddn = ddn
         self.mask_length = mask_length
+        self.wildcard = None
+        self.network = None
+        self.broadcast = None
+        self.host_min = None
+        self.host_max = None
+        self.hosts = None
+
+        """
+            Cree un bitmask rempli de 1 de longeur n (la taille de notre masque)
+            Demonstration avec une longeur de 8 bits:
+                > 1                  = 0000 0000 0001
+                > 1 << 8 = 256       = 0001 0000 0000
+                                            <<<<8<<<<
+                > (1 << 8) - 1 = 255 = 0000 1111 1111
+        """
+        mask = (1 << mask_length) - 1
+
+        """
+            Decale le masque de (32 - n) bits vers la gauche pour le positionner a la bonne place
+                > 255               = 0000 0000 0000 0000 0000 0000 1111 1111
+                > 255 << (32 - 8)
+                > 255 << 26         = 1111 1111 0000 0000 0000 0000 0000 0000
+                                                <<<<<<<<<<<26<<<<<<<<<<<<<<<<
+        """
+        self.mask = DecimalDotNotation.from_dec(mask << (32 - mask_length))
+
+    # Transforme un string en objet IPAdress
+    @staticmethod
+    def from_str(addr):
+        valid_ip = re.match(IPAddress.cidr_ip_pattern, addr)
+        if not valid_ip:
+            err = ValueError()
+            err.strerror = "EX : 113.92.12.133/12\n"
+            raise err
+
+        ddn, mask_length = valid_ip.groups()
+        ddn = DecimalDotNotation.from_str(ddn)
+
+        # Valide que le masque est une valeur entre 0 et 32
+        mask_length = int(valid_ip.groups()[-1])
+        if mask_length not in range(33):
+            err = ValueError()
+            err.strerror = "Valeur de masque invalide : {0}".format(mask_length)
+            raise err
+
+        return IPAddress(ddn, mask_length)
+
+    @staticmethod
+    def from_dict(dic):
+        ip_addr = IPAddress.from_str(dic["Address"])
+        ip_addr.mask = dic["Netmask"]
+        ip_addr.wildcard = dic["Wildcard"]
+        ip_addr.network =  dic["Network"] if "Network" in dic else None
+        ip_addr.broadcast = dic["Broadcast"] if "Broadcast" in dic else None
+        ip_addr.host_min = dic["HostMin"] if "HostMin" in dic else None
+        ip_addr.host_max = dic["HostMax"] if "HostMax" in dic else None
+        ip_addr.hosts = dic["Hosts/Net"]
+        return ip_addr
 
     # Affichage
     def __format__(self, fmt):
@@ -293,14 +293,38 @@ class IPAddress:
         return output
 
     def __repr__(self):
-        return "IPAddress(ddn={0}, mask_length={1})".format(self.ddn, self.mask_length)
+        output = "IPAddress(ddn={0}".format(format(self.ddn, "m"))
+        output += " wildcard={0}".format(self.wildcard)
+        output += " network={0}".format(self.network)
+        output += " broadcast={0}".format(self.broadcast)
+        output += " host_min={0}".format(self.host_min)
+        output += " host_max={0}".format(self.host_max)
+        output += " hosts={0})".format(self.hosts)
+        return output
 
     # Casting
     def __str__(self):
         return str(self.ddn)
 
-# Un petit cadeau <3
-def print_gj():
-    print()
-    print("░░█▀░░░░░░░░░░░▀▀███████░░░░░\n░░█▌░░░░░░░░░░░░░░░▀██████░░░\n░█▌░░░░░░░░░░░░░░░░███████▌░░\n░█░░░░░░░░░░░░░░░░░████████░░\n▐▌░░░░░░░░░░░░░░░░░▀██████▌░░\n░▌▄███▌░░░░▀████▄░░░░▀████▌░░\n▐▀▀▄█▄░▌░░░▄██▄▄▄▀░░░░████▄▄░\n▐░▀░░═▐░░░░░░══░░▀░░░░▐▀░▄▀▌▌\n▐░░░░░▌░░░░░░░░░░░░░░░▀░▀░░▌▌\n▐░░░▄▀░░░▀░▌░░░░░░░░░░░░▌█░▌▌\n░▌░░▀▀▄▄▀▀▄▌▌░░░░░░░░░░▐░▀▐▐░\n░▌░░▌░▄▄▄▄░░░▌░░░░░░░░▐░░▀▐░░\n░█░▐▄██████▄░▐░░░░░░░░█▀▄▄▀░░\n░▐░▌▌░░░░░░▀▀▄▐░░░░░░█▌░░░░░░\n░░█░░▄▀▀▀▀▄░▄═╝▄░░░▄▀░▌░░░░░░\n░░░▌▐░░░░░░▌░▀▀░░▄▀░░▐░░░░░░░\n░░░▀▄░░░░░░░░░▄▀▀░░░░█░░░░░░░\n░░░▄█▄▄▄▄▄▄▄▀▀░░░░░░░▌▌░░░░░░\n░░▄▀▌▀▌░░░░░░░░░░░░░▄▀▀▄░░░░░\n▄▀░░▌░▀▄░░░░░░░░░░▄▀░░▌░▀▄░░░\n░░░░▌█▄▄▀▄░░░░░░▄▀░░░░▌░░░▌▄▄\n░░░▄▐██████▄▄░▄▀░░▄▄▄▄▌░░░░▄░\n░░▄▌████████▄▄▄███████▌░░░░░▄\n░▄▀░██████████████████▌▀▄░░░░\n▀░░░█████▀▀░░░▀███████░░░▀▄░░\n░░░░▐█▀░░░▐░░░░░▀████▌░░░░▀▄░\n░░░░░░▌░░░▐░░░░▐░░▀▀█░░░░░░░▀\n░░░░░░▐░░░░▌░░░▐░░░░░▌░░░░░░░\n")
-    print()
+    def __eq__(self, ip_addr):
+        def validate_ans(ans_info):
+            display_name, val_name = ans_info
+            ans_val = getattr(self, val_name)
+            student_val = getattr(ip_addr, val_name)
+
+            if ans_val is not None and str(student_val) != str(ans_val):
+                print("{0} incorrect pour l'adresse {1} : {2} devrait être {3}".format(display_name, self.ddn, student_val, ans_val))
+                print()
+                return False
+            return True
+
+        all_values = list(map(validate_ans,
+                [("Wildcard", "wildcard"),
+                ("Adresse de réseau", "network"),
+                ("Adresse de broadcast", "broadcast"),
+                ("Première adresse disponible", "host_min"),
+                ("Dernière adresse disponible", "host_max"),
+                ("Nombre d'hôte", "hosts")]
+        ))
+
+        return reduce(lambda x, y: x and y, all_values, True)
