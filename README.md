@@ -12,7 +12,7 @@ Voici ma solution :
 
 ![ipcalc version Python](https://github.com/CegepGranby/calculateur-sous-masque/blob/master/enonce/solution.png?raw=true)
 
-Pour vous donner une idée, mon implémentation (sans compter l'affichage) est d'eviron 10 lignes de code.
+Pour vous donner une idée, mon implémentation (sans compter l'affichage) est d'environ 10 lignes de code.
 
 ## Comment faire
 Vous devez tout d'abbord créer un fichier à la racine du projet appelé **exactement** : `solution.py`. Ensuite vous devrez créer une fonction appelée `ipcalc` prenant en paramètre une adresse ip. Voici à quoi elle devrait ressembler :
