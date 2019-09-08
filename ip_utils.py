@@ -2,14 +2,6 @@
 from functools import reduce
 import re
 
-"""
-    Classe pour representer un Octet. Elle peut :
-        - Être affichee en format binaire    : format(octet, "b")
-        - Être affichee en format decimale   : str(octet)
-        - Donner le resultat du "et" logique : octet & autre octet
-
-    Cet objet est cree de la facon suivante : Byte(valeur_decimale)
-"""
 class Byte:
     def __init__(self, value):
         if not isinstance(value, int):
@@ -41,22 +33,8 @@ class Byte:
     def __or__(self, other_byte):
         return Byte(int(self) | int(other_byte))
 
-"""
-    Classe pour representer la notation "decimal dot" (EX : 165.92.12.71)
-        - Être affichee en format binaire           : format(ddn, "b")
-        - Être affichee en format decimale          : str(ddn)
-        - Donner le resultat du et logique          : ddn & autre_ddn
-        - Donner le resultat du ou logique          : ddn | autre_ddn
-        - Donner le resultat d'une addition         : ddn + autre_ddn
-        - Donner le resultat de la negation binaire : ~ddn
-
-    Cet objet peut être cree de trois facons :
-        - DecimalDotNotation()
-        - DecimalDotNotation.from_dec(valeur_decimale)
-        - DecimalDotNotation.from_byte_group(liste_d_octets)
-"""
 class DecimalDotNotation:
-    # Expressions regulieres pour valider et extraire chacune des valeurs
+    # Expressions regulieres pour valider et extraire chacune des valeurs d'octet
     ddn_pattern = re.compile(r"^(\d{1,3}).(\d{1,3}).(\d{1,3}).(\d{1,3})$")
 
     def __init__(self):
