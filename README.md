@@ -15,10 +15,12 @@ Voici ma solution :
 Pour vous donner une idée, mon implémentation (sans compter l'affichage) est d'eviron 10 lignes de code.
 
 ## Comment faire
-Vous devez tout d'abbord créer un fichier à la racine du projet appelé **exactement** : `solution.py`. Ensuite vous devrez créer une fonction appelée `ipcalc` prenant en paramètre une adresse ip et un masque sous-réseau. Voici à quoi elle devrait ressembler :
+Vous devez tout d'abbord créer un fichier à la racine du projet appelé **exactement** : `solution.py`. Ensuite vous devrez créer une fonction appelée `ipcalc` prenant en paramètre une adresse ip. Voici à quoi elle devrait ressembler :
 
 ```python
-def ipcalc(addr, mask):
+def ipcalc(addr):
+	# Le masque sous-réseau est déjà généré pour vous
+	mask = addr.mask
 	# Votre définition
 ```
 Cette fonction sera appelée automatiquement lorsque vous faite :
@@ -37,15 +39,19 @@ Le programme vient avec un correcteur automatique, pour l'appeler simplement fai
 $ python ipcalc.py -c
 ```
 
-Par contre votre fonction `ipcalc` devra retourner un objet de type `IPInfo`. Voici comment faire :
+Par contre votre fonction `ipcalc` devra retourner un objet de type `IPAddress`. Voici comment faire :
 
 ```python
-from ip_utils import IPInfo
-# Importez la classe en question dans ip_utils
 
-def ipcalc(addr, mask):
-	# Votre définition
-	return IPInfo(addr, mask, wildcard, network, broadcast, hostmin, hostmax, hosts)
+def ipcalc(addr):
+	# ...
+	addr.wildcard = wildcard
+	addr.network = network
+	addr.broadcast = broadcast
+	addr.host_min = host_min
+	addr.host_max = host_max
+	addr.hosts = hosts
+	return addr
 ```
 
 ## Notion pour le binaire
