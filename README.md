@@ -1,4 +1,4 @@
-# Calculateur de sous-masque réseau
+# ipcalc
 **IMPORTANT**: Pour cet exercice, assurez-vous d'avoir **Python** d'installé.
 
 ## La tâche à faire
@@ -52,7 +52,7 @@ Contient toutes les informations concernant les adresses IP :
 * Le nombre d'hôtes possibles
 
 #### DotDecimalNotation
-Cette classe vous permettra d'appliquer des opérations sur des objets représentant la notation [notation décimale à point](https://fr.wikipedia.org/wiki/Notation_d%C3%A9cimale_%C3%A0_point) :
+Cette classe vous permettra d'appliquer des opérations sur des objets représentant la [notation décimale à point](https://fr.wikipedia.org/wiki/Notation_d%C3%A9cimale_%C3%A0_point) :
 * Le et logique
 * Le ou logique
 * L'addition et la soustraction
