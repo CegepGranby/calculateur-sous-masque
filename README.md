@@ -1,4 +1,4 @@
-# Calculateur de sous-masque réseau
+# ipcalc
 **IMPORTANT**: Pour cet exercice, assurez-vous d'avoir **Python** d'installé.
 
 ## La tâche à faire
